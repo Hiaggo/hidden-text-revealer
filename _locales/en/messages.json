@@ -1,0 +1,70 @@
+{
+  "extName": {
+    "message": "Hidden Text Revealer"
+  },
+  "extDescription": {
+    "message": "Reveals hidden text on web pages"
+  },
+  "tinyFont": {
+    "message": "Tiny font"
+  },
+  "colorMatch": {
+    "message": "Color matches background"
+  },
+  "transparent": {
+    "message": "Transparent"
+  },
+  "visibilityHidden": {
+    "message": "Visibility hidden"
+  },
+  "displayNone": {
+    "message": "Display none"
+  },
+  "textIndent": {
+    "message": "Text-indent"
+  },
+  "foundItems": {
+    "message": "Found $COUNT$ hidden text element(s)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "revealButton": {
+    "message": "Reveal Hidden Text"
+  },
+  "hideButton": {
+    "message": "Hide Revealed Text"
+  },
+  "revealing": {
+    "message": "Revealing hidden text"
+  },
+  "ready": {
+    "message": "Ready"
+  },
+  "clickToReveal": {
+    "message": "Click to reveal"
+  },
+  "noItems": {
+    "message": "No items match the selected filters"
+  },
+  "hiddenTexts": {
+    "message": "Hidden Texts"
+  },
+  "filters": {
+    "message": "Filters"
+  },
+  "minimap": {
+    "message": "Minimap"
+  },
+  "shortcuts": {
+    "message": "Keyboard Shortcuts"
+  },
+  "revealShortcut": {
+    "message": "Reveal/Hide"
+  },
+  "newFeatures": {
+    "message": "New Features"
+  }
+}

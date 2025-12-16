@@ -3,77 +3,436 @@
 <head>
   <meta charset="UTF-8">
   <style>
-    body {
-      width: 300px;
-      padding: 20px;
-      font-family: Arial, sans-serif;
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    h1 {
+    
+    body {
+      width: 400px;
+      height: 600px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
       font-size: 18px;
-      margin: 0 0 16px 0;
+      font-weight: 600;
+      margin-bottom: 4px;
     }
-    .description {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 20px;
+    
+    .header-status {
+      font-size: 12px;
+      opacity: 0.9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    button {
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Action Buttons */
+    .actions {
+      padding: 16px 20px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .main-button {
       width: 100%;
       padding: 12px;
       font-size: 14px;
-      font-weight: bold;
+      font-weight: 600;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       background: #4CAF50;
       color: white;
+      transition: all 0.2s;
+      margin-bottom: 10px;
     }
-    button:hover {
+    
+    .main-button:hover {
       background: #45a049;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
     }
-    button.active {
+    
+    .main-button.active {
       background: #f44336;
     }
-    .info {
-      background: #f5f5f5;
-      padding: 12px;
-      border-radius: 6px;
-      margin-top: 16px;
+    
+    .main-button.active:hover {
+      background: #da190b;
+    }
+    
+    .secondary-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .secondary-button {
+      padding: 8px 12px;
       font-size: 12px;
-    }
-    .info h3 {
-      margin: 0 0 8px 0;
-      font-size: 13px;
-    }
-    .info ul {
-      margin: 0;
-      padding-left: 20px;
-    }
-    .status {
-      text-align: center;
-      margin-top: 12px;
-      font-size: 13px;
+      font-weight: 600;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      background: white;
       color: #666;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .secondary-button:hover {
+      border-color: #4CAF50;
+      color: #4CAF50;
+    }
+    
+    .secondary-button.active {
+      border-color: #4CAF50;
+      background: #e8f5e9;
+      color: #4CAF50;
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #f5f5f5;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+    
+    .tab:hover {
+      background: #e8e8e8;
+    }
+    
+    .tab.active {
+      color: #4CAF50;
+      border-bottom-color: #4CAF50;
+      background: white;
+    }
+    
+    /* Tab Content */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Filters */
+    .filters-section {
+      padding: 16px 20px;
+    }
+    
+    .filter-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .filter-label:hover {
+      background: #f5f5f5;
+    }
+    
+    .filter-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    .filter-text {
+      flex: 1;
+      font-size: 13px;
+      color: #333;
+    }
+    
+    .filter-count {
+      background: #e0e0e0;
+      color: #666;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    
+    /* List */
+    .list-section {
+      padding: 12px 20px;
+    }
+    
+    .list-item {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 4px solid #ff9800;
+    }
+    
+    .list-item:hover {
+      background: #e8e8e8;
+      transform: translateX(-4px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .list-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .list-item-number {
+      background: #666;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    
+    .reason-badge {
+      background: #ff9800;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .list-item-text {
+      font-size: 12px;
+      color: #444;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #999;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    /* Minimap */
+    .minimap-container {
+      padding: 16px 20px;
+    }
+    
+    .minimap {
+      background: #f5f5f5;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      height: 400px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .minimap-viewport {
+      position: absolute;
+      background: rgba(33, 150, 243, 0.1);
+      border: 2px solid #2196F3;
+      pointer-events: none;
+    }
+    
+    .minimap-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #ff9800;
+      border-radius: 50%;
+      border: 2px solid white;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .minimap-dot:hover {
+      transform: scale(1.5);
+      z-index: 10;
+    }
+    
+    .minimap-stats {
+      margin-top: 12px;
+      padding: 12px;
+      background: #e3f2fd;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #1976D2;
+    }
+    
+    /* Scrollbar */
+    .tab-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .tab-content::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    
+    .tab-content::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+    
+    .tab-content::-webkit-scrollbar-thumb:hover {
+      background: #555;
     }
   </style>
 </head>
 <body>
-  <h1>🔍 Hidden Text Revealer</h1>
-  <p class="description">Detects and highlights hidden text on web pages.</p>
+  <!-- Header -->
+  <div class="header">
+    <h1 id="header-title">🔍 Hidden Text Revealer</h1>
+    <div class="header-status">
+      <span class="status-indicator" id="status-indicator"></span>
+      <span id="header-status">Ready</span>
+    </div>
+  </div>
   
-  <button id="toggleButton">Reveal Hidden Text</button>
-  <div class="status" id="status"></div>
+  <!-- Actions -->
+  <div class="actions">
+    <button class="main-button" id="toggleButton">Reveal Hidden Text</button>
+    <div class="secondary-buttons">
+      <button class="secondary-button" id="toggleMinimap">
+        🗺️ <span data-i18n="minimap">Minimap</span>
+      </button>
+      <button class="secondary-button" id="languageToggle">
+        🌐 EN / PT
+      </button>
+    </div>
+  </div>
   
-  <div class="info">
-    <h3>Detects:</h3>
-    <ul>
-      <li>Tiny fonts (&lt;2px)</li>
-      <li>Color matching background</li>
-      <li>Transparent text</li>
-      <li>Hidden/invisible elements</li>
-      <li>Text-indent hiding</li>
-    </ul>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="list">
+      📋 <span data-i18n="hiddenTexts">List</span> (<span id="list-count">0</span>)
+    </button>
+    <button class="tab" data-tab="filters">
+      🎛️ <span data-i18n="filters">Filters</span>
+    </button>
+    <button class="tab" data-tab="minimap">
+      🗺️ <span data-i18n="minimap">Minimap</span>
+    </button>
+  </div>
+  
+  <!-- Tab: List -->
+  <div class="tab-content active" id="tab-list">
+    <div class="list-section" id="list-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-text" data-i18n="clickToReveal">
+          Click "Reveal Hidden Text" to start
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tab: Filters -->
+  <div class="tab-content" id="tab-filters">
+    <div class="filters-section">
+      <label class="filter-label">
+        <input type="checkbox" class="filter-checkbox" data-filter="tiny-font" checked>
+        <span class="filter-text" data-i18n="tinyFont">Tiny font</span>
+        <span class="filter-count" data-count="tiny-font">0</span>
+      </label>
+      <label class="filter-label">
+        <input type="checkbox" class="filter-checkbox" data-filter="color-match" checked>
+        <span class="filter-text" data-i18n="colorMatch">Color matches background</span>
+        <span class="filter-count" data-count="color-match">0</span>
+      </label>
+      <label class="filter-label">
+        <input type="checkbox" class="filter-checkbox" data-filter="transparent" checked>
+        <span class="filter-text" data-i18n="transparent">Transparent</span>
+        <span class="filter-count" data-count="transparent">0</span>
+      </label>
+      <label class="filter-label">
+        <input type="checkbox" class="filter-checkbox" data-filter="visibility-hidden" checked>
+        <span class="filter-text" data-i18n="visibilityHidden">Visibility hidden</span>
+        <span class="filter-count" data-count="visibility-hidden">0</span>
+      </label>
+      <label class="filter-label">
+        <input type="checkbox" class="filter-checkbox" data-filter="display-none" checked>
+        <span class="filter-text" data-i18n="displayNone">Display none</span>
+        <span class="filter-count" data-count="display-none">0</span>
+      </label>
+      <label class="filter-label">
+        <input type="checkbox" class="filter-checkbox" data-filter="text-indent" checked>
+        <span class="filter-text" data-i18n="textIndent">Text-indent</span>
+        <span class="filter-count" data-count="text-indent">0</span>
+      </label>
+    </div>
+  </div>
+  
+  <!-- Tab: Minimap -->
+  <div class="tab-content" id="tab-minimap">
+    <div class="minimap-container">
+      <div class="minimap" id="minimap-canvas">
+        <div class="minimap-viewport" id="minimap-viewport"></div>
+      </div>
+      <div class="minimap-stats" id="minimap-stats">
+        Click on dots to scroll to hidden text
+      </div>
+    </div>
   </div>
   
   <script src="popup.js"></script>

@@ -1,4 +1,14 @@
+// Content script - Hidden Text Revealer v2.1
 let isRevealing = false;
+let hiddenElements = [];
+let activeFilters = {
+  'tiny-font': true,
+  'color-match': true,
+  'transparent': true,
+  'visibility-hidden': true,
+  'display-none': true,
+  'text-indent': true
+};
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "toggleReveal") {
@@ -8,17 +18,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else {
       hideRevealedText();
     }
-    sendResponse({ revealing: isRevealing });
+    sendResponse({ 
+      revealing: isRevealing,
+      items: getSerializableItems()
+    });
   } else if (request.action === "getStatus") {
-    sendResponse({ revealing: isRevealing });
+    sendResponse({ 
+      revealing: isRevealing,
+      items: getSerializableItems()
+    });
+  } else if (request.action === "updateFilters") {
+    activeFilters = request.filters;
+    applyFilters();
+    sendResponse({ success: true });
+  } else if (request.action === "scrollToElement") {
+    scrollToElement(request.index);
+    sendResponse({ success: true });
   }
   return true;
 });
 
+function getSerializableItems() {
+  // Convert items to plain objects for messaging
+  return hiddenElements.map((item, index) => ({
+    text: item.text,
+    reasons: item.reasons,
+    visible: item.visible,
+    index: index,
+    position: item.position,
+    viewportHeight: getViewportHeightRatio()
+  }));
+}
+
+function getViewportHeightRatio() {
+  const docHeight = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight
+  );
+  return window.innerHeight / docHeight;
+}
+
 function revealHiddenText() {
   const allElements = document.querySelectorAll('*:not(script):not(style):not(noscript)');
-  let count = 0;
-  let hiddenTexts = [];
+  hiddenElements = [];
+  
+  const docHeight = Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight
+  );
+  const docWidth = Math.max(
+    document.body.scrollWidth,
+    document.documentElement.scrollWidth
+  );
   
   allElements.forEach(element => {
     if (!element.textContent.trim()) return;
@@ -39,7 +90,6 @@ function revealHiddenText() {
     const visibility = styles.visibility;
     const display = styles.display;
     
-    // Encontrar o background color real (pode estar em elementos pais)
     const bgColor = getEffectiveBackgroundColor(element);
     
     let isHidden = false;
@@ -77,37 +127,95 @@ function revealHiddenText() {
     }
     
     if (isHidden) {
-      element.classList.add('hidden-text-revealed');
-      element.setAttribute('data-hidden-reason', reasons.join(', '));
-      
-      // Coletar informações do texto oculto
       let textContent = element.textContent.trim();
-      // Limitar tamanho do texto para a lista
-      if (textContent.length > 60) {
-        textContent = textContent.substring(0, 60) + '...';
+      if (textContent.length > 100) {
+        textContent = textContent.substring(0, 100) + '...';
       }
       
-      hiddenTexts.push({
+      // Get position for minimap
+      const rect = element.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+      
+      const absoluteTop = rect.top + scrollTop;
+      const absoluteLeft = rect.left + scrollLeft;
+      
+      hiddenElements.push({
+        element: element,
         text: textContent,
-        reasons: reasons
+        reasons: reasons,
+        visible: true,
+        position: {
+          y: absoluteTop / docHeight,
+          x: absoluteLeft / docWidth
+        }
       });
       
-      count++;
+      element.classList.add('hidden-text-revealed');
+      element.setAttribute('data-hidden-reason', reasons.join(', '));
+      element.setAttribute('data-hidden-index', hiddenElements.length - 1);
     }
   });
   
-  showNotification(count, hiddenTexts);
+  applyFilters();
+  updateBadge(hiddenElements.length);
+  showNotification(hiddenElements.length);
+}
+
+function hideRevealedText() {
+  const revealed = document.querySelectorAll('.hidden-text-revealed');
+  revealed.forEach(element => {
+    element.classList.remove('hidden-text-revealed');
+    element.classList.remove('hidden-text-filtered');
+    element.removeAttribute('data-hidden-reason');
+    element.removeAttribute('data-hidden-index');
+  });
+  
+  hiddenElements = [];
+  updateBadge(0);
+  removeNotification();
+}
+
+function applyFilters() {
+  hiddenElements.forEach((item) => {
+    const shouldShow = item.reasons.some(reason => activeFilters[reason]);
+    item.visible = shouldShow;
+    
+    if (item.element) {
+      if (shouldShow) {
+        item.element.classList.remove('hidden-text-filtered');
+        item.element.classList.add('hidden-text-revealed');
+      } else {
+        item.element.classList.add('hidden-text-filtered');
+        item.element.classList.remove('hidden-text-revealed');
+      }
+    }
+  });
+}
+
+function scrollToElement(index) {
+  const item = hiddenElements[index];
+  if (item && item.element) {
+    item.element.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+    
+    item.element.classList.add('hidden-text-flash');
+    setTimeout(() => {
+      item.element.classList.remove('hidden-text-flash');
+    }, 2000);
+  }
 }
 
 function getEffectiveBackgroundColor(element) {
   let current = element;
-  let maxDepth = 10; // Limitar busca para não ir longe demais
+  let maxDepth = 10;
   
   while (current && maxDepth > 0) {
     const bg = window.getComputedStyle(current).backgroundColor;
     const rgba = parseColor(bg);
     
-    // Se encontrou um background opaco, retornar
     if (rgba && rgba.a > 0.5) {
       return bg;
     }
@@ -116,17 +224,7 @@ function getEffectiveBackgroundColor(element) {
     maxDepth--;
   }
   
-  // Se não encontrou nada, retornar branco (padrão)
   return 'rgb(255, 255, 255)';
-}
-
-function hideRevealedText() {
-  const revealed = document.querySelectorAll('.hidden-text-revealed');
-  revealed.forEach(element => {
-    element.classList.remove('hidden-text-revealed');
-    element.removeAttribute('data-hidden-reason');
-  });
-  removeNotification();
 }
 
 function colorsAreSimilar(color1, color2) {
@@ -134,16 +232,12 @@ function colorsAreSimilar(color1, color2) {
   const rgb2 = parseColor(color2);
   
   if (!rgb1 || !rgb2) return false;
-  
-  // Se o texto tem alpha muito baixo, é transparente
   if (rgb1.a < 0.1) return true;
   
   const rDiff = Math.abs(rgb1.r - rgb2.r);
   const gDiff = Math.abs(rgb1.g - rgb2.g);
   const bDiff = Math.abs(rgb1.b - rgb2.b);
   
-  // Threshold mais rigoroso: 15 em vez de 30
-  // Cores precisam ser MUITO próximas para serem consideradas similares
   return rDiff < 15 && gDiff < 15 && bDiff < 15;
 }
 
@@ -160,82 +254,38 @@ function parseColor(color) {
   return null;
 }
 
-function getReasonLabel(reason) {
-  const labels = {
-    'tiny-font': 'Fonte minúscula',
-    'color-match': 'Cor igual ao fundo',
-    'transparent': 'Transparente',
-    'visibility-hidden': 'Visibility hidden',
-    'display-none': 'Display none',
-    'text-indent': 'Text-indent'
-  };
-  return labels[reason] || reason;
-}
-
-function showNotification(count, hiddenTexts) {
+function showNotification(count) {
   removeNotification();
   
   const notification = document.createElement('div');
   notification.id = 'hidden-text-notification';
-  
-  // Cabeçalho
-  const header = document.createElement('div');
-  header.className = 'notification-header';
-  header.innerHTML = `<strong>🔍 Found ${count} hidden text element${count !== 1 ? 's' : ''}</strong>`;
-  notification.appendChild(header);
-  
-  // Lista de textos (limitar a 10 itens para não ficar muito grande)
-  if (hiddenTexts.length > 0) {
-    const list = document.createElement('div');
-    list.className = 'notification-list';
-    
-    const maxItems = Math.min(hiddenTexts.length, 10);
-    for (let i = 0; i < maxItems; i++) {
-      const item = document.createElement('div');
-      item.className = 'notification-item';
-      
-      const reasonBadge = document.createElement('span');
-      reasonBadge.className = 'reason-badge';
-      reasonBadge.textContent = getReasonLabel(hiddenTexts[i].reasons[0]); // Mostrar primeira razão traduzida
-      
-      const textSpan = document.createElement('span');
-      textSpan.className = 'hidden-text-content';
-      textSpan.textContent = hiddenTexts[i].text;
-      
-      item.appendChild(reasonBadge);
-      item.appendChild(textSpan);
-      list.appendChild(item);
-    }
-    
-    if (hiddenTexts.length > 10) {
-      const more = document.createElement('div');
-      more.className = 'notification-more';
-      more.textContent = `... e mais ${hiddenTexts.length - 10}`;
-      list.appendChild(more);
-    }
-    
-    notification.appendChild(list);
-  }
-  
-  // Botão fechar
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'notification-close';
-  closeBtn.textContent = '✕';
-  closeBtn.onclick = () => removeNotification();
-  notification.appendChild(closeBtn);
+  notification.innerHTML = `
+    <div class="notification-content">
+      <strong>🔍 ${count} hidden text${count !== 1 ? 's' : ''} found</strong>
+      <p style="margin: 5px 0 0 0; font-size: 11px; opacity: 0.8;">
+        Open the extension popup to see the list
+      </p>
+    </div>
+  `;
   
   document.body.appendChild(notification);
   
-  // Auto-fechar após 10 segundos
   setTimeout(() => {
     if (notification.parentElement) {
       notification.style.opacity = '0';
       setTimeout(() => removeNotification(), 300);
     }
-  }, 10000);
+  }, 4000);
 }
 
 function removeNotification() {
   const existing = document.getElementById('hidden-text-notification');
   if (existing) existing.remove();
+}
+
+function updateBadge(count) {
+  chrome.runtime.sendMessage({ 
+    action: "updateBadge", 
+    count: count 
+  });
 }

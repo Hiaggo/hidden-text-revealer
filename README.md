@@ -97,7 +97,7 @@ You can also customize the highlighting style in `content.css`:
 ## Privacy
 
 This extension:
-- ✅ Runs only on pages you visit and when you want it
+- ✅ Runs only on pages you visit
 - ✅ Does NOT collect or send any data
 - ✅ Works completely offline
 - ✅ Does NOT track your browsing
@@ -134,6 +134,7 @@ Potential features to add:
 - [ ] Export list of hidden text
 - [ ] Whitelist certain domains
 - [ ] Custom detection rules
+- [ ] Statistics dashboard
 - [ ] Keyboard shortcuts
 - [ ] Detection sensitivity settings
 

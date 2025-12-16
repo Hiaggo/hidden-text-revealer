@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Hidden Text Revealer",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Reveals hidden text on web pages",
+  "default_locale": "en",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -26,5 +28,17 @@
       "js": ["content.js"],
       "css": ["content.css"]
     }
-  ]
+  ],
+  "commands": {
+    "toggle-reveal": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "Command+Shift+H"
+      },
+      "description": "Toggle hidden text reveal"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
 }

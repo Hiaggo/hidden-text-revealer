@@ -1,0 +1,70 @@
+{
+  "extName": {
+    "message": "Revelador de Texto Oculto"
+  },
+  "extDescription": {
+    "message": "Revela textos ocultos em páginas web"
+  },
+  "tinyFont": {
+    "message": "Fonte minúscula"
+  },
+  "colorMatch": {
+    "message": "Cor igual ao fundo"
+  },
+  "transparent": {
+    "message": "Transparente"
+  },
+  "visibilityHidden": {
+    "message": "Visibility hidden"
+  },
+  "displayNone": {
+    "message": "Display none"
+  },
+  "textIndent": {
+    "message": "Text-indent"
+  },
+  "foundItems": {
+    "message": "Encontrado(s) $COUNT$ texto(s) oculto(s)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "revealButton": {
+    "message": "Revelar Textos Ocultos"
+  },
+  "hideButton": {
+    "message": "Ocultar Textos Revelados"
+  },
+  "revealing": {
+    "message": "Revelando textos ocultos"
+  },
+  "ready": {
+    "message": "Pronto"
+  },
+  "clickToReveal": {
+    "message": "Clique para revelar"
+  },
+  "noItems": {
+    "message": "Nenhum item corresponde aos filtros selecionados"
+  },
+  "hiddenTexts": {
+    "message": "Textos Ocultos"
+  },
+  "filters": {
+    "message": "Filtros"
+  },
+  "minimap": {
+    "message": "Minimapa"
+  },
+  "shortcuts": {
+    "message": "Atalhos de Teclado"
+  },
+  "revealShortcut": {
+    "message": "Revelar/Ocultar"
+  },
+  "newFeatures": {
+    "message": "Novidades"
+  }
+}
