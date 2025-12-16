@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 16px 0;
+    }
+    .description {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button.active {
+      background: #f44336;
+    }
+    .info {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 16px;
+      font-size: 12px;
+    }
+    .info h3 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+    }
+    .info ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .status {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Hidden Text Revealer</h1>
+  <p class="description">Detects and highlights hidden text on web pages.</p>
+  
+  <button id="toggleButton">Reveal Hidden Text</button>
+  <div class="status" id="status"></div>
+  
+  <div class="info">
+    <h3>Detects:</h3>
+    <ul>
+      <li>Tiny fonts (&lt;2px)</li>
+      <li>Color matching background</li>
+      <li>Transparent text</li>
+      <li>Hidden/invisible elements</li>
+      <li>Text-indent hiding</li>
+    </ul>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
