@@ -1,6 +1,7 @@
 // Popup script with i18n and minimap support
 let currentLang = 'en';
 let hiddenItems = [];
+let analysisData = null;
 let activeFilters = {
   'tiny-font': true,
   'color-match': true,
@@ -50,11 +51,9 @@ const translations = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load language preference
-  chrome.storage.local.get(['language'], (result) => {
-    currentLang = result.language || 'en';
-    updateLanguage();
-  });
+  // Always start with English
+  currentLang = 'en';
+  updateLanguage();
   
   // Setup event listeners
   setupEventListeners();
@@ -119,14 +118,16 @@ async function updateButtonState() {
       toggleButton.classList.add('active');
       headerStatus.textContent = translations[currentLang].revealing;
       
-      // Load hidden items
+      // Load hidden items and analysis
       hiddenItems = response.items || [];
+      analysisData = response.analysis || null;
       updateUI();
     } else {
       toggleButton.textContent = translations[currentLang].revealButton;
       toggleButton.classList.remove('active');
       headerStatus.textContent = translations[currentLang].ready;
       hiddenItems = [];
+      analysisData = null;
       updateUI();
     }
   } catch (error) {
@@ -140,6 +141,7 @@ function updateUI() {
   updateList();
   updateFilterCounts();
   updateMinimap();
+  updateAnalysis();
 }
 
 function updateList() {
@@ -299,7 +301,6 @@ function switchTab(tabName) {
 
 function toggleLanguage() {
   currentLang = currentLang === 'en' ? 'pt' : 'en';
-  chrome.storage.local.set({ language: currentLang });
   updateLanguage();
   updateButtonState();
 }
@@ -327,4 +328,258 @@ function reasonToKey(reason) {
     'text-indent': 'textIndent'
   };
   return mapping[reason] || reason;
+}
+
+function updateAnalysis() {
+  const container = document.getElementById('analysis-container');
+  
+  if (!analysisData || !analysisData.riskScore) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-text">
+          ${currentLang === 'en' ? 
+            'Click "Reveal Hidden Text" to start professional analysis' :
+            'Clique em "Revelar Textos Ocultos" para iniciar análise profissional'}
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  const { riskScore, keywordStuffing, hiddenLinks, textDensity, maliciousKeywords } = analysisData;
+  
+  let html = `
+    <!-- Risk Score Card -->
+    <div class="risk-score-card" style="background: linear-gradient(135deg, ${riskScore.riskColor}, ${adjustColor(riskScore.riskColor, -20)});">
+      <div style="font-size: 14px; opacity: 0.9;">${currentLang === 'en' ? 'SEO Risk Score' : 'Score de Risco SEO'}</div>
+      <div class="risk-score-number">${riskScore.score}/100</div>
+      <div class="risk-level">
+        <span style="font-size: 24px;">${riskScore.riskEmoji}</span>
+        <span>${riskScore.riskLevel}</span>
+      </div>
+    </div>
+  `;
+  
+  // Alerts based on risk level
+  if (riskScore.score >= 76) {
+    html += `
+      <div class="alert-box critical">
+        <strong>⚠️ ${currentLang === 'en' ? 'CRITICAL RISK' : 'RISCO CRÍTICO'}</strong><br>
+        ${currentLang === 'en' ? 
+          'This site shows signs of Black Hat SEO. High risk of Google penalty.' :
+          'Este site mostra sinais de Black Hat SEO. Alto risco de penalização do Google.'}
+      </div>
+    `;
+  } else if (riskScore.score >= 51) {
+    html += `
+      <div class="alert-box warning">
+        <strong>⚠️ ${currentLang === 'en' ? 'HIGH RISK' : 'RISCO ALTO'}</strong><br>
+        ${currentLang === 'en' ? 
+          'Suspicious patterns detected. Review and correct immediately.' :
+          'Padrões suspeitos detectados. Revise e corrija imediatamente.'}
+      </div>
+    `;
+  }
+  
+  // Keyword Stuffing Section
+  if (keywordStuffing && keywordStuffing.suspicious.length > 0) {
+    html += `
+      <div class="analysis-section">
+        <h4>🔑 ${currentLang === 'en' ? 'Keyword Stuffing' : 'Keyword Stuffing'}</h4>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Total Words' : 'Total de Palavras'}</span>
+          <span class="stat-value">${keywordStuffing.totalWords}</span>
+        </div>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Suspicious Keywords' : 'Palavras Suspeitas'}</span>
+          <span class="stat-value ${keywordStuffing.suspicious.length > 5 ? 'high' : 'medium'}">
+            ${keywordStuffing.suspicious.length}
+          </span>
+        </div>
+        <div class="keyword-list">
+          ${keywordStuffing.suspicious.slice(0, 5).map(kw => `
+            <div class="keyword-item">
+              <span class="keyword-word">${kw.word}</span>
+              <div>
+                <span class="keyword-count">${kw.count}x</span>
+                <span style="margin-left: 8px; color: #666; font-size: 11px;">${kw.density}%</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Hidden Links Section
+  if (hiddenLinks && hiddenLinks.totalLinks > 0) {
+    html += `
+      <div class="analysis-section">
+        <h4>🔗 ${currentLang === 'en' ? 'Hidden Links' : 'Links Ocultos'}</h4>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Total Links' : 'Total de Links'}</span>
+          <span class="stat-value ${hiddenLinks.totalLinks > 20 ? 'high' : hiddenLinks.totalLinks > 10 ? 'medium' : 'low'}">
+            ${hiddenLinks.totalLinks}
+          </span>
+        </div>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Unique Domains' : 'Domínios Únicos'}</span>
+          <span class="stat-value">${hiddenLinks.uniqueDomains}</span>
+        </div>
+        ${hiddenLinks.suspicious.length > 0 ? `
+          <div class="analysis-stat">
+            <span class="stat-label">${currentLang === 'en' ? 'Suspicious Domains' : 'Domínios Suspeitos'}</span>
+            <span class="stat-value high">${hiddenLinks.suspicious.length}</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+  
+  // Text Density Section
+  if (textDensity) {
+    html += `
+      <div class="analysis-section">
+        <h4>📝 ${currentLang === 'en' ? 'Text Density' : 'Densidade de Texto'}</h4>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Visible Words' : 'Palavras Visíveis'}</span>
+          <span class="stat-value">${textDensity.visible.words}</span>
+        </div>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Hidden Words' : 'Palavras Ocultas'}</span>
+          <span class="stat-value ${textDensity.risk === 'critical' ? 'high' : textDensity.risk === 'high' ? 'medium' : 'low'}">
+            ${textDensity.hidden.words}
+          </span>
+        </div>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Ratio' : 'Proporção'}</span>
+          <span class="stat-value ${textDensity.risk === 'critical' ? 'high' : textDensity.risk === 'high' ? 'medium' : 'low'}">
+            ${textDensity.ratios.words}%
+          </span>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Malicious Keywords Section
+  if (maliciousKeywords && maliciousKeywords.totalMatches > 0) {
+    html += `
+      <div class="analysis-section">
+        <h4>🛡️ ${currentLang === 'en' ? 'Security Analysis' : 'Análise de Segurança'}</h4>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Malicious Patterns' : 'Padrões Maliciosos'}</span>
+          <span class="stat-value high">${maliciousKeywords.totalMatches}</span>
+        </div>
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Categories Detected' : 'Categorias Detectadas'}</span>
+          <span class="stat-value high">${maliciousKeywords.totalCategories}</span>
+        </div>
+        ${Object.keys(maliciousKeywords.detected).map(category => `
+          <div class="keyword-item">
+            <span class="keyword-word">${category.toUpperCase()}</span>
+            <span class="keyword-count">${maliciousKeywords.detected[category].totalCount}x</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  // Prompt Injection Detection Section
+  if (analysisData.promptInjection && analysisData.promptInjection.hasFindings) {
+    const pi = analysisData.promptInjection;
+    html += `
+      <div class="analysis-section" style="border-left: 4px solid #9C27B0;">
+        <h4>🤖 ${currentLang === 'en' ? 'Possible Prompt Injection' : 'Possível Prompt Injection'}</h4>
+        <div class="alert-box info" style="background: #f3e5f5; border-left-color: #9C27B0; color: #4a148c; margin-bottom: 12px;">
+          ${currentLang === 'en' ? 
+            '<strong>Note:</strong> These patterns <u>may indicate</u> attempts to manipulate AI systems. Review context carefully.' :
+            '<strong>Nota:</strong> Estes padrões <u>podem indicar</u> tentativas de manipular sistemas de IA. Revise o contexto cuidadosamente.'}
+        </div>
+        
+        <div class="analysis-stat">
+          <span class="stat-label">${currentLang === 'en' ? 'Suspicious Texts' : 'Textos Suspeitos'}</span>
+          <span class="stat-value ${pi.stats.bySeverity.critical > 0 ? 'high' : 'medium'}">
+            ${pi.stats.totalSuspicious}
+          </span>
+        </div>
+        
+        ${pi.stats.bySeverity.critical > 0 ? `
+          <div class="analysis-stat">
+            <span class="stat-label">⚠️ Critical</span>
+            <span class="stat-value high">${pi.stats.bySeverity.critical}</span>
+          </div>
+        ` : ''}
+        
+        ${pi.stats.bySeverity.high > 0 ? `
+          <div class="analysis-stat">
+            <span class="stat-label">⚠️ High</span>
+            <span class="stat-value medium">${pi.stats.bySeverity.high}</span>
+          </div>
+        ` : ''}
+        
+        ${pi.stats.bySeverity.medium > 0 ? `
+          <div class="analysis-stat">
+            <span class="stat-label">⚠️ Medium</span>
+            <span class="stat-value">${pi.stats.bySeverity.medium}</span>
+          </div>
+        ` : ''}
+        
+        <div style="margin-top: 12px; font-size: 12px; color: #666;">
+          <strong>${currentLang === 'en' ? 'Categories found:' : 'Categorias encontradas:'}</strong><br>
+          ${Object.keys(pi.stats.byCategory).map(cat => `
+            <span style="display: inline-block; margin: 4px 6px 4px 0; padding: 2px 8px; background: #f0f0f0; border-radius: 10px; font-size: 11px;">
+              ${cat.replace(/([A-Z])/g, ' $1').trim()} (${pi.stats.byCategory[cat]})
+            </span>
+          `).join('')}
+        </div>
+        
+        <details style="margin-top: 12px;">
+          <summary style="cursor: pointer; font-weight: 600; font-size: 12px; color: #9C27B0;">
+            ${currentLang === 'en' ? 'Show suspicious texts' : 'Mostrar textos suspeitos'} ▼
+          </summary>
+          <div style="margin-top: 8px; max-height: 200px; overflow-y: auto;">
+            ${pi.detected.slice(0, 5).map((item, idx) => `
+              <div style="background: #fafafa; padding: 8px; margin: 6px 0; border-radius: 4px; border-left: 3px solid ${
+                item.highestSeverity === 'critical' ? '#D32F2F' :
+                item.highestSeverity === 'high' ? '#F57C00' : '#FBC02D'
+              };">
+                <div style="font-size: 11px; color: #666; margin-bottom: 4px;">
+                  <strong>Text #${item.index + 1}</strong> - 
+                  <span style="color: ${
+                    item.highestSeverity === 'critical' ? '#D32F2F' :
+                    item.highestSeverity === 'high' ? '#F57C00' : '#F57C00'
+                  }; text-transform: uppercase;">${item.highestSeverity}</span>
+                </div>
+                <div style="font-size: 11px; font-family: monospace; color: #333; word-break: break-all;">
+                  "${item.text}"
+                </div>
+                <div style="margin-top: 6px; font-size: 10px; color: #888;">
+                  ${item.findings.length} pattern(s) detected
+                </div>
+              </div>
+            `).join('')}
+            ${pi.detected.length > 5 ? `
+              <div style="text-align: center; font-size: 11px; color: #999; margin-top: 8px;">
+                ... and ${pi.detected.length - 5} more
+              </div>
+            ` : ''}
+          </div>
+        </details>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+function adjustColor(color, percent) {
+  const num = parseInt(color.replace('#',''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = (num >> 8 & 0x00FF) + amt;
+  const B = (num & 0x0000FF) + amt;
+  return '#' + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+    (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+    .toString(16).slice(1);
 }

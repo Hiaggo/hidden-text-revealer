@@ -1,6 +1,7 @@
-// Content script - Hidden Text Revealer v2.1
+// Content script - Hidden Text Revealer PRO v3.0
 let isRevealing = false;
 let hiddenElements = [];
+let professionalAnalysis = null;
 let activeFilters = {
   'tiny-font': true,
   'color-match': true,
@@ -20,12 +21,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     sendResponse({ 
       revealing: isRevealing,
-      items: getSerializableItems()
+      items: getSerializableItems(),
+      analysis: professionalAnalysis
     });
   } else if (request.action === "getStatus") {
     sendResponse({ 
       revealing: isRevealing,
-      items: getSerializableItems()
+      items: getSerializableItems(),
+      analysis: professionalAnalysis
     });
   } else if (request.action === "updateFilters") {
     activeFilters = request.filters;
@@ -160,6 +163,12 @@ function revealHiddenText() {
   applyFilters();
   updateBadge(hiddenElements.length);
   showNotification(hiddenElements.length);
+  
+  // Perform professional analysis
+  if (typeof performProfessionalAnalysis === 'function') {
+    professionalAnalysis = performProfessionalAnalysis(hiddenElements);
+    console.log('Professional Analysis Complete:', professionalAnalysis);
+  }
 }
 
 function hideRevealedText() {
@@ -172,6 +181,7 @@ function hideRevealedText() {
   });
   
   hiddenElements = [];
+  professionalAnalysis = null;
   updateBadge(0);
   removeNotification();
 }

@@ -1,13 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Hidden Text Revealer",
-  "version": "2.1.0",
-  "description": "Reveals hidden text on web pages",
+  "name": "Hidden Text Revealer PRO",
+  "version": "3.0.0",
+  "description": "Reveals hidden text with SEO analysis and security detection",
   "default_locale": "en",
   "permissions": [
     "activeTab",
-    "scripting",
-    "storage"
+    "scripting"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -25,7 +24,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["analyzer.js", "content.js"],
       "css": ["content.css"]
     }
   ],
